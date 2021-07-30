@@ -80,3 +80,29 @@ func TestTop10(t *testing.T) {
 		}
 	})
 }
+
+func TestMyText(t *testing.T) {
+	mytext := `Test addd boris addd Test he he He HE test addd`
+	t.Run("positive test", func(t *testing.T) {
+		if taskWithAsteriskIsCompleted {
+			expected := []string{
+				"he",    // 4
+				"addd",  // 3
+				"test",  // 3
+				"boris", // 1
+			}
+			require.Equal(t, expected, Top10(mytext))
+		} else {
+			expected := []string{
+				"addd",  // 3
+				"Test",  // 2
+				"he",    // 2
+				"HE",    // 1
+				"He",    // 1
+				"boris", // 1
+				"test",  // 1
+			}
+			require.Equal(t, expected, Top10(mytext))
+		}
+	})
+}
