@@ -1,17 +1,20 @@
 package hw03frequencyanalysis
 
 import (
+	"regexp"
 	"sort"
 	"strings"
 )
+
+var regex = regexp.MustCompile(`[^\s,!'.-]+-?[^\s,!'.]*`)
 
 type wordList map[int][]string
 
 func Top10(text string) (result []string) {
 
 	wordsFrequencies := map[string]int{}
-	for _, word := range strings.Fields(text) {
-		wordsFrequencies[word]++
+	for _, word := range regex.FindAllString(text, -1) {
+		wordsFrequencies[strings.ToLower(word)]++
 	}
 
 	if len(wordsFrequencies) < 1 {
@@ -39,6 +42,5 @@ func Top10(text string) (result []string) {
 	if len(result) > 10 {
 		result = result[:10]
 	}
-
 	return result
 }
