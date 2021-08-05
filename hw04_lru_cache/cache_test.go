@@ -48,9 +48,52 @@ func TestCache(t *testing.T) {
 		require.False(t, ok)
 		require.Nil(t, val)
 	})
+}
 
-	t.Run("purge logic", func(t *testing.T) {
-		// Write me
+func TestMyCases(t *testing.T) {
+	t.Run("lowcapacity", func(t *testing.T) {
+		c := NewCache(1)
+
+		_ = c.Set("aaa", 100)
+		_ = c.Set("bbb", 200)
+		_ = c.Set("ccc", 300)
+
+		nilres, ok := c.Get("aaa")
+		require.False(t, ok)
+		require.Equal(t, nil, nilres)
+
+		nilres, ok = c.Get("bbb")
+		require.False(t, ok)
+		require.Equal(t, nil, nilres)
+	})
+
+	t.Run("clear", func(t *testing.T) {
+		c := NewCache(2)
+
+		_ = c.Set("aaa", 100)
+		_ = c.Set("bbb", 200)
+
+		c.Clear()
+
+		nilres, ok := c.Get("aaa")
+		require.False(t, ok)
+		require.Equal(t, nil, nilres)
+
+		nilres, ok = c.Get("bbb")
+		require.False(t, ok)
+		require.Equal(t, nil, nilres)
+	})
+
+	t.Run("unknown keys", func(t *testing.T) {
+		c := NewCache(5)
+
+		nilres, ok := c.Get("fff")
+		require.False(t, ok)
+		require.Equal(t, nil, nilres)
+
+		nilres, ok = c.Get("ggg")
+		require.False(t, ok)
+		require.Equal(t, nil, nilres)
 	})
 }
 
