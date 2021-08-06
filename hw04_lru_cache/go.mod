@@ -1,4 +1,4 @@
-module github.com/thewolf27/Golang-Tutorial/hw04
+module github.com/thewolf27/Golang-Tutorial/hw04_lru_cache
 
 go 1.16
 
