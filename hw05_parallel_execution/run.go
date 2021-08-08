@@ -9,6 +9,7 @@ import (
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 
 type Task func() error
+
 type TaskCh chan Task
 
 func runTask(taskCh TaskCh, wg *sync.WaitGroup, maxErrCount *int64) {
