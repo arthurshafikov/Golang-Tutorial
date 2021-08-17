@@ -1,5 +1,17 @@
 package main
 
+import (
+	"os"
+)
+
 func main() {
-	// Place your code here.
+	if len(os.Args) < 2 {
+		panic("Not enough args")
+	}
+	env, err := ReadDir(os.Args[1])
+	if err != nil {
+		panic(err)
+	}
+	cmd := os.Args[2:]
+	RunCmd(cmd, env)
 }
