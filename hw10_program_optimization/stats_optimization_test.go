@@ -17,7 +17,9 @@ const (
 	timeLimit = 300 * time.Millisecond
 )
 
-// go test -v -count=1 -timeout=30s -tags bench .
+// go test -v -count=1 -timeout=30s -tags bench . -bench=.
+// go test -v -count=1 -timeout=30s -tags bench . -bench=. -cpuprofile=cpu.out -memprofile=mem.out
+// go test -bench=TestGetDomainStat_Time_And_Memory -benchmem -timeout=30s.
 func TestGetDomainStat_Time_And_Memory(t *testing.T) {
 	bench := func(b *testing.B) {
 		b.StopTimer()
