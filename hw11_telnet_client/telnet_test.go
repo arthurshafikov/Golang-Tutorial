@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"sync"
@@ -43,6 +44,7 @@ func TestTelnetClient(t *testing.T) {
 		}()
 
 		go func() {
+			fmt.Println("Server active")
 			defer wg.Done()
 
 			conn, err := l.Accept()
@@ -52,9 +54,11 @@ func TestTelnetClient(t *testing.T) {
 
 			request := make([]byte, 1024)
 			n, err := conn.Read(request)
+			fmt.Println("Server recieve: ", string(request)[:n])
 			require.NoError(t, err)
 			require.Equal(t, "hello\n", string(request)[:n])
 
+			fmt.Println("Server write: ")
 			n, err = conn.Write([]byte("world\n"))
 			require.NoError(t, err)
 			require.NotEqual(t, 0, n)
