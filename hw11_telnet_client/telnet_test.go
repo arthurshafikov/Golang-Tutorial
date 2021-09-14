@@ -63,3 +63,48 @@ func TestTelnetClient(t *testing.T) {
 		wg.Wait()
 	})
 }
+
+func TestMy(t *testing.T) {
+	t.Run("error receive from closed connection", func(t *testing.T) {
+		l, err := net.Listen("tcp", "127.0.0.1:")
+		require.NoError(t, err)
+
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+		client := NewTelnetClient(l.Addr().String(), 10*time.Second, ioutil.NopCloser(in), out)
+		require.NoError(t, client.Connect())
+		require.NoError(t, client.Close())
+		require.Error(t, client.Receive())
+	})
+
+	t.Run("error send to a closed connection", func(t *testing.T) {
+		l, err := net.Listen("tcp", "127.0.0.1:")
+		require.NoError(t, err)
+
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+		client := NewTelnetClient(l.Addr().String(), 10*time.Second, ioutil.NopCloser(in), out)
+		require.NoError(t, client.Connect())
+		require.NoError(t, client.Close())
+
+		in.WriteString("Write to closed channel")
+		require.Error(t, client.Send())
+	})
+
+	t.Run("wrong host address", func(t *testing.T) {
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+		client := NewTelnetClient("99999.9.9.9:", 10*time.Second, ioutil.NopCloser(in), out)
+		require.Error(t, client.Connect())
+	})
+
+	t.Run("timeouted connection", func(t *testing.T) {
+		l, err := net.Listen("tcp", "127.0.0.1:")
+		require.NoError(t, err)
+
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+		client := NewTelnetClient(l.Addr().String(), 10*time.Microsecond, ioutil.NopCloser(in), out)
+		require.Error(t, client.Connect())
+	})
+}
