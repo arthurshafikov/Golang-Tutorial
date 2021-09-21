@@ -1,0 +1,14 @@
+version: '3.1'
+
+services:
+  db:
+    build:
+      context: ./build/sql
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DATABASE: homestead
+      POSTGRES_USERNAME: homestead
+      POSTGRES_PASSWORD: secret
+    ports: 
+      - "5432:5432"

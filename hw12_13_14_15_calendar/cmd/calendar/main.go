@@ -3,21 +3,27 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/thewolf27/hw12_13_14_15_calendar/internal/app"
+	"github.com/thewolf27/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/thewolf27/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/thewolf27/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/thewolf27/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
-var configFile string
+var (
+	configFile string
+	logFile    string
+)
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "./configs/config.toml", "Path to configuration file")
+	flag.StringVar(&logFile, "log", "./logs/log.txt", "Path to log file")
 }
 
 func main() {
@@ -27,14 +33,23 @@ func main() {
 		printVersion()
 		return
 	}
-
 	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	logg := logger.New(config.Logger.Level, logFile)
 
-	storage := memorystorage.New()
+	var storage app.Storage
+
+	switch config.Storage.Type {
+	case "memory":
+		storage = memorystorage.New()
+	case "db":
+		storage = sqlstorage.New(config.DB.Dsn)
+	default:
+		log.Fatalln("Config Storage Type is unknown")
+	}
+
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(logg, calendar)
+	server := internalhttp.NewServer(logg, calendar, config.Server.Host, config.Server.Port)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -59,3 +74,17 @@ func main() {
 		os.Exit(1) //nolint:gocritic
 	}
 }
+
+/*
+* go run ./cmd/calendar/... --config=/home/thewolf/Golang/Golang-Tutorial/hw12_13_14_15_calendar/configs/config.toml
+* go run ./cmd/calendar/...
+* export GOPATH=$HOME/go; export PATH=$PATH:$GOPATH/bin;
+* goose -dir migrations postgres "user=homestead password=secret dbname=homestead sslmode=disable" up
+*
+* docker ps -a -f name=dpost
+* docker create network postgres
+* docker run --network postgres -d --name dpostgres -e POSTGRES_PASSWORD=password -p 5432:5432 postgres
+* docker run --network postgres -it --rm -e PGPASSWORD=password postgres psql -h dpostgres -U postgres
+*
+* docker run --network postgres -it --rm postgres psql -h dpostgres -U homestead;
+ */
