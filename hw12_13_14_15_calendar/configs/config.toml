@@ -1,5 +1,9 @@
 [logger]
-level = "INFO"
-
-# TODO
-# ...
+level = "DEBUG"
+[db]
+dsn = "host=localhost user=homestead password=secret dbname=homestead sslmode=disable"
+[storage]
+type = "db"
+[server]
+host = "localhost"
+port = "1234"
