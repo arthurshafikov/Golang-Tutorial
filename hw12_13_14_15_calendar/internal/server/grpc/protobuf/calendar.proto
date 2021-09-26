@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option go_package = "./;generated";
+
+package api;
+
+message Event {
+    int64 ID = 1;
+	string Title = 2;              
+	string Descr = 3;              
+	int64 Owner = 4;              
+	string StartAt = 5;          
+	string EndAt = 6;            
+	string SendNotificationAt = 7; 
+}
+
+service CalendarService {
+    rpc Create(EventRequest) returns (ServerResponse) {}
+    rpc Update(EventRequest) returns (ServerResponse) {}
+    rpc Delete(EventRequest) returns (ServerResponse) {}
+    rpc ListEventsOnADay(ListEventsRequest) returns (ServerResponse) {}
+    rpc ListEventsOnAWeek(ListEventsRequest) returns (ServerResponse) {}
+    rpc ListEventsOnAMonth(ListEventsRequest) returns (ServerResponse) {}
+}
+
+message EventRequest {
+	Event event = 1;
+}
+message ListEventsRequest {
+	string date = 1;
+}
+
+message ServerResponse {
+	string data = 1;
+    string error = 2;
+}

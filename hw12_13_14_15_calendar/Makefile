@@ -41,3 +41,6 @@ migrate:
 
 rollback: 
 	goose -dir migrations postgres "user=homestead password=secret dbname=homestead sslmode=disable" down
+
+generate:
+	protoc -I=internal/server/grpc/protobuf --go_out=internal/server/grpc/generated --go-grpc_out=internal/server/grpc/generated internal/server/grpc/protobuf/calendar.proto

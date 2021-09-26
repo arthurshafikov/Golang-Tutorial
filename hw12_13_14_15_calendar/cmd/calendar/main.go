@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/thewolf27/hw12_13_14_15_calendar/internal/app"
 	"github.com/thewolf27/hw12_13_14_15_calendar/internal/logger"
+	"github.com/thewolf27/hw12_13_14_15_calendar/internal/server/grpc/api"
 	internalhttp "github.com/thewolf27/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/thewolf27/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/thewolf27/hw12_13_14_15_calendar/internal/storage/sql"
@@ -33,6 +35,10 @@ func main() {
 		printVersion()
 		return
 	}
+
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	defer cancel()
+
 	config := NewConfig()
 	logg := logger.New(config.Logger.Level, logFile)
 
@@ -43,17 +49,15 @@ func main() {
 		storage = memorystorage.New()
 	case "db":
 		storage = sqlstorage.New(config.DB.Dsn)
+		storage.(*sqlstorage.Storage).Connect(ctx)
 	default:
-		log.Fatalln("Config Storage Type is unknown")
+		log.Println("Config Storage Type is unknown")
+		return
 	}
 
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(logg, calendar, config.Server.Host, config.Server.Port)
-
-	ctx, cancel := signal.NotifyContext(context.Background(),
-		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	defer cancel()
+	server := internalhttp.NewServer(logg, calendar, config.HTTPServer.Host, config.HTTPServer.Port)
 
 	go func() {
 		<-ctx.Done()
@@ -66,8 +70,7 @@ func main() {
 		}
 	}()
 
-	logg.Info("calendar is running...")
-
+	go api.RunGrpcServer(ctx, fmt.Sprintf("%s:%s", config.GrpcServer.Host, config.GrpcServer.Port), calendar)
 	if err := server.Start(ctx); err != nil {
 		logg.Error("failed to start http server: " + err.Error())
 		cancel()
@@ -86,5 +89,13 @@ func main() {
 * docker run --network postgres -d --name dpostgres -e POSTGRES_PASSWORD=password -p 5432:5432 postgres
 * docker run --network postgres -it --rm -e PGPASSWORD=password postgres psql -h dpostgres -U postgres
 *
+protoc -I ./protobuf --go_out=plugins:grpc protobuf/calendar.proto
+protoc -I=grpc/protobuf --go_out=grpc/generated grpc/protobuf/calendar.proto
+
+protoc -I grpc/protobuf --go-grpc_out=grpc/generated grpc/protobuf/calendar.proto
+
+protoc -I grpc/protobuf --go-grpc_out=grpc grpc/protobuf/calendar.proto
+
+protoc -I=grpc/protobuf --go_out=grpc/generated --go-grpc_out=grpc/generated grpc/protobuf/calendar.proto
 * docker run --network postgres -it --rm postgres psql -h dpostgres -U homestead;
- */
+*/
