@@ -1,17 +1,15 @@
 package memorystorage
 
 import (
-	"fmt"
 	"sync"
+	"time"
 
 	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage"
 )
 
-type EventSlice []storage.Event
-
 type Storage struct {
 	mu     sync.RWMutex
-	Events EventSlice
+	Events storage.EventsSlice
 }
 
 func New() *Storage {
@@ -21,6 +19,7 @@ func New() *Storage {
 func (s *Storage) Add(event storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	if s.checkIfStartDateTimeIsBusy(event) {
 		return storage.ErrDateBusy
 	}
@@ -34,19 +33,19 @@ func (s *Storage) Change(event storage.Event) error {
 
 	for i, e := range s.Events {
 		if e.ID == event.ID {
-			if (event.StartDate != e.StartDate || event.StartTime != e.StartTime) && s.checkIfStartDateTimeIsBusy(event) {
+			if !event.StartAt.Equal(e.StartAt) && s.checkIfStartDateTimeIsBusy(event) {
 				return storage.ErrDateBusy
 			}
 			s.Events[i] = event
 		}
 	}
+
 	return nil
 }
 
-func (s *Storage) Get(id string) (storage.Event, error) {
-	fmt.Println(s.Events)
+func (s *Storage) Get(event storage.Event) (storage.Event, error) {
 	for _, e := range s.Events {
-		if id == e.ID {
+		if event.ID == e.ID {
 			return e, nil
 		}
 	}
@@ -61,23 +60,43 @@ func (s *Storage) Delete(event storage.Event) error {
 	for i, e := range s.Events {
 		if e.ID == event.ID {
 			s.Events = append(s.Events[:i], s.Events[i+1:]...)
+			return nil
 		}
 	}
-	return nil
+
+	return storage.ErrNotFound
 }
 
-func (s *Storage) List() error {
+func (s *Storage) ListEventsOnADay(t time.Time) (storage.EventsSlice, error) {
+	events := storage.EventsSlice{}
 	for _, e := range s.Events {
-		fmt.Println(e)
+		if t.Format(storage.RequestDateFormat) == e.StartAt.Format(storage.RequestDateFormat) {
+			events = append(events, e)
+		}
 	}
-	return nil
+
+	return events, nil
+}
+
+func (s *Storage) ListEventsOnARange(t time.Time, tMax time.Time) (storage.EventsSlice, error) {
+	t = t.Add(-1)
+
+	events := storage.EventsSlice{}
+	for _, e := range s.Events {
+		if tMax.After(e.StartAt) && t.Before(e.StartAt) {
+			events = append(events, e)
+		}
+	}
+
+	return events, nil
 }
 
 func (s *Storage) checkIfStartDateTimeIsBusy(event storage.Event) bool {
 	for _, e := range s.Events {
-		if e.StartDate == event.StartDate && e.StartTime == event.StartTime {
+		if e.StartAt == event.StartAt {
 			return true
 		}
 	}
+
 	return false
 }

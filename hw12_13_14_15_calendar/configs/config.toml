@@ -4,6 +4,9 @@ level = "DEBUG"
 dsn = "host=localhost user=homestead password=secret dbname=homestead sslmode=disable"
 [storage]
 type = "db"
-[server]
+[httpserver]
 host = "localhost"
 port = "1234"
+[grpcserver]
+host = "localhost"
+port = "2345"

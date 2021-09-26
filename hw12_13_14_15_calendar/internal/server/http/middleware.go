@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// todo make method?
 func loggingMiddleware(next http.Handler, server *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		server.Logger.Info(
@@ -20,3 +21,16 @@ func loggingMiddleware(next http.Handler, server *Server) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// func jsonDecodeMiddleware(next http.Handler, server *Server) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		var decoded interface{}
+// 		decoder := json.NewDecoder(r.Body)
+// 		if err := decoder.Decode(&decoded); err != nil {
+// 			panic(err)
+// 		}
+// 		buf := strings.NewReader(decoded)
+// 		r.Body = io.NopCloser(buf)
+// 		next.ServeHTTP(w, r)
+// 	})
+// }

@@ -7,10 +7,11 @@ import (
 )
 
 type Config struct {
-	Logger  LoggerConf
-	DB      DBConf
-	Storage StorageConf
-	Server  ServerConf
+	Logger     LoggerConf
+	DB         DBConf
+	Storage    StorageConf
+	HTTPServer ServerConf
+	GrpcServer ServerConf
 }
 
 type LoggerConf struct {
