@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"log"
@@ -12,6 +12,7 @@ type Config struct {
 	Storage    StorageConf
 	HTTPServer ServerConf
 	GrpcServer ServerConf
+	RabbitMq   RabbitMqConf
 }
 
 type LoggerConf struct {
@@ -20,6 +21,10 @@ type LoggerConf struct {
 
 type DBConf struct {
 	Dsn string
+}
+
+type RabbitMqConf struct {
+	URL string
 }
 
 type StorageConf struct {
@@ -31,9 +36,9 @@ type ServerConf struct {
 	Port string
 }
 
-func NewConfig() Config {
+func NewConfig(configFilePath string) Config {
 	var config Config
-	_, err := toml.DecodeFile(configFile, &config)
+	_, err := toml.DecodeFile(configFilePath, &config)
 	if err != nil {
 		log.Fatalln("Error decode config file...")
 	}

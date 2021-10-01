@@ -8,56 +8,52 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLogger(t *testing.T) {
-	logFilePath := "test.txt"
+const logFilePath = "test.txt"
 
-	t.Run("test debug level", func(t *testing.T) {
-		os.Remove(logFilePath)
+func TestDebugLevel(t *testing.T) {
+	logger := New(DebugLevel, logFilePath)
 
-		logger := New("DEBUG", logFilePath)
+	logger.Error("test error")
+	logger.Warn("test warn")
+	logger.Info("test info")
 
-		logger.Error("test error")
-		logger.Warn("test warn")
-		logger.Info("test info")
+	bytes, err := ioutil.ReadFile(logFilePath)
+	require.NoError(t, err)
 
-		expected := "Err log: test error\nWarn log: test warn\nInfo log: test info\n"
+	expected := ErrorLogBeginString + "test error\n" + WarnLogBeginString + "test warn\n" + InfoLogBeginString + "test info\n"
+	require.Equal(t, expected, string(bytes))
 
-		bytes, err := ioutil.ReadFile(logFilePath)
-		require.NoError(t, err)
-		require.Equal(t, expected, string(bytes))
-	})
+	os.Remove(logFilePath)
+}
 
-	t.Run("test error level", func(t *testing.T) {
-		os.Remove(logFilePath)
+func TestErrorLevel(t *testing.T) {
+	logger := New(ErrorLevel, logFilePath)
 
-		logger := New("ERROR", logFilePath)
+	logger.Error("test error")
+	logger.Warn("test warn")
+	logger.Info("test info")
 
-		logger.Error("test error")
-		logger.Warn("test warn")
-		logger.Info("test info")
+	bytes, err := ioutil.ReadFile(logFilePath)
+	require.NoError(t, err)
 
-		expected := "Err log: test error\n"
+	expected := ErrorLogBeginString + "test error\n"
+	require.Equal(t, expected, string(bytes))
 
-		bytes, err := ioutil.ReadFile(logFilePath)
-		require.NoError(t, err)
-		require.Equal(t, expected, string(bytes))
-	})
+	os.Remove(logFilePath)
+}
 
-	t.Run("test warn level", func(t *testing.T) {
-		os.Remove(logFilePath)
+func TestWarnLevel(t *testing.T) {
+	logger := New(WarnLevel, logFilePath)
 
-		logger := New("WARN", logFilePath)
+	logger.Error("test error")
+	logger.Warn("test warn")
+	logger.Info("test info")
 
-		logger.Error("test error")
-		logger.Warn("test warn")
-		logger.Info("test info")
+	bytes, err := ioutil.ReadFile(logFilePath)
+	require.NoError(t, err)
 
-		expected := "Err log: test error\nWarn log: test warn\n"
-
-		bytes, err := ioutil.ReadFile(logFilePath)
-		require.NoError(t, err)
-		require.Equal(t, expected, string(bytes))
-	})
+	expected := ErrorLogBeginString + "test error\n" + WarnLogBeginString + "test warn\n"
+	require.Equal(t, expected, string(bytes))
 
 	os.Remove(logFilePath)
 }

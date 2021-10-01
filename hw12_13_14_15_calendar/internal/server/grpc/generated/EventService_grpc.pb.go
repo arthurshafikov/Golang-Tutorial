@@ -277,5 +277,5 @@ var CalendarService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "calendar.proto",
+	Metadata: "EventService.proto",
 }

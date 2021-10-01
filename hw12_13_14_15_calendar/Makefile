@@ -1,4 +1,6 @@
 BIN := "./bin/calendar"
+SCHEDULER := "./bin/calendar_scheduler"
+SENDER := "./bin/calendar_sender"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -9,6 +11,14 @@ build:
 
 run: build
 	$(BIN) -config ./configs/config.toml
+
+scheduler:
+	go build -v -o $(SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
+	$(SCHEDULER)
+
+sender:
+	go build -v -o $(SENDER) -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
+	$(SENDER)
 
 build-img:
 	docker build \
@@ -43,4 +53,7 @@ rollback:
 	goose -dir migrations postgres "user=homestead password=secret dbname=homestead sslmode=disable" down
 
 generate:
-	protoc -I=internal/server/grpc/protobuf --go_out=internal/server/grpc/generated --go-grpc_out=internal/server/grpc/generated internal/server/grpc/protobuf/calendar.proto
+	protoc -I=api --go_out=internal/server/grpc/generated --go-grpc_out=internal/server/grpc/generated api/EventService.proto
+
+evans:
+	evans api/EventService.proto -p 2345
