@@ -86,6 +86,7 @@ func TestMemoryDeleteEvent(t *testing.T) {
 
 func TestMemoryListDayEvents(t *testing.T) {
 	memstorage := New()
+
 	for _, e := range events {
 		err := memstorage.Add(e)
 		require.NoError(t, err)
@@ -110,10 +111,10 @@ func TestMemoryListWeekEvents(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	eventTime := time.Date(2020, 04, 31, 0, 0, 0, 0, time.Now().Location())
+	eventTime := weekEvents[0].StartAt
 
-	tMax := eventTime.Add(7 * time.Hour * 24)
-	result, err := memstorage.ListEventsOnARange(eventTime, tMax)
+	timePlusWeek := eventTime.Add(7 * time.Hour * 24)
+	result, err := memstorage.ListEventsOnARange(eventTime, timePlusWeek)
 	require.NoError(t, err)
 
 	require.Equal(t, weekEvents, result)
@@ -121,27 +122,67 @@ func TestMemoryListWeekEvents(t *testing.T) {
 
 func TestMemoryListMonthEvents(t *testing.T) {
 	memstorage := New()
-	monthEvents := storage.EventsSlice{}
+	expectEvents := storage.EventsSlice{}
 
 	for i := 0; i < 9; i++ {
-		e := events[0]
-		if i%3 == 0 {
-			e.StartAt = e.StartAt.Add(time.Duration(i) * time.Hour * 24)
-			monthEvents = append(monthEvents, e)
+		event := events[0]
+		if i < 5 {
+			event.StartAt = event.StartAt.Add(time.Duration(i) * time.Hour * 24)
+			expectEvents = append(expectEvents, event)
 		} else {
-			e.StartAt = e.StartAt.AddDate(i*10, 0, 0)
+			event.StartAt = event.StartAt.AddDate(i*10, 0, 0)
 		}
-		err := memstorage.Add(e)
+		err := memstorage.Add(event)
 		require.NoError(t, err)
 	}
 
 	eventTime := events[0].StartAt
 
-	tMax := eventTime.Add(30 * time.Hour * 24)
-	result, err := memstorage.ListEventsOnARange(eventTime, tMax)
+	timePlusMonth := eventTime.Add(30 * time.Hour * 24)
+	result, err := memstorage.ListEventsOnARange(eventTime, timePlusMonth)
 	require.NoError(t, err)
 
-	require.Equal(t, monthEvents, result)
+	require.Equal(t, expectEvents, result)
+}
+
+func TestGetEventsThatNeedToBeSend(t *testing.T) {
+	memstorage := New()
+	expectEvents := storage.EventsSlice{}
+
+	for i := 0; i < 9; i++ {
+		e := events[0]
+		e.SendNotificationAt = time.Now().Add(time.Duration(i-4) * time.Hour * 24)
+		e.StartAt = e.StartAt.Add(time.Duration(i) * time.Hour * 24)
+		err := memstorage.Add(e)
+		require.NoError(t, err)
+		if i < 5 {
+			expectEvents = append(expectEvents, e)
+		}
+	}
+
+	result, err := memstorage.GetEventsThatNeedToBeSend(time.Now())
+	require.NoError(t, err)
+	require.Equal(t, expectEvents, result)
+}
+
+func TestGetEventsWhereEndAtBeforeGivenTimestamp(t *testing.T) {
+	memstorage := New()
+	expectEvents := storage.EventsSlice{}
+
+	for i := 0; i < 9; i++ {
+		e := events[0]
+		e.StartAt = time.Now().Add(time.Duration(i-4) * time.Hour * 24)
+		e.EndAt = time.Now().Add(time.Duration(i-4) * time.Hour * 24)
+		err := memstorage.Add(e)
+		require.NoError(t, err)
+		if i < 5 {
+			expectEvents = append(expectEvents, e)
+		}
+	}
+
+	result, err := memstorage.GetEventsWhereEndAtBeforeGivenTimestamp(time.Now())
+	require.NoError(t, err)
+	require.Equal(t, expectEvents, result)
 }
 
 func TestMemoryBusyTimeAddError(t *testing.T) {
@@ -152,8 +193,9 @@ func TestMemoryBusyTimeAddError(t *testing.T) {
 	}
 
 	busyevent := events[0]
+	busyevent.ID = 9999
 	err := memstorage.Add(busyevent)
-	require.ErrorIs(t, err, storage.ErrDateBusy)
+	require.ErrorIs(t, err, storage.ErrStartAtBusy)
 }
 
 func TestMemoryConcurrent(t *testing.T) {

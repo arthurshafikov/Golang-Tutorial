@@ -6,83 +6,85 @@ import (
 	"fmt"
 	"time"
 
-	grpcapi "github.com/thewolf27/hw12_13_14_15_calendar/internal/server/grpc/generated"
+	"github.com/thewolf27/hw12_13_14_15_calendar/internal/server"
+	"github.com/thewolf27/hw12_13_14_15_calendar/internal/server/grpc/generated"
 	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage"
 )
 
-var (
-	EmptyErrorResponse = "null"
-	successResponse    = &grpcapi.ServerResponse{
-		Data:  storage.RequestSuccessMessage,
-		Error: EmptyErrorResponse,
-	}
-)
-
-type CalendarService struct {
-	app Application
-	grpcapi.UnimplementedCalendarServiceServer
+var successResponse = &generated.ServerResponse{
+	Data:  storage.RequestSuccessMessage,
+	Error: server.EmptyErrorResponse,
 }
 
-func (c *CalendarService) Create(ctx context.Context, req *grpcapi.EventRequest) (*grpcapi.ServerResponse, error) {
-	event, err := storage.ParseEvent(req.Event, true)
+type CalendarService struct {
+	app    Application
+	logger Logger
+	generated.UnimplementedCalendarServiceServer
+}
+
+func (c *CalendarService) Create(ctx context.Context, req *generated.EventRequest) (*generated.ServerResponse, error) {
+	event, err := server.ParseEvent(req.Event, true)
 	if err != nil {
 		return nil, err
 	}
 	if err := c.app.CreateEvent(event); err != nil {
-		return nil, fmt.Errorf("didnt created the event %w", err)
+		return nil, fmt.Errorf(server.ErrCantCreateEventFormat, err)
 	}
 	return successResponse, nil
 }
 
-func (c *CalendarService) Update(ctx context.Context, req *grpcapi.EventRequest) (*grpcapi.ServerResponse, error) {
-	event, err := storage.ParseEvent(req.Event, false)
+func (c *CalendarService) Update(ctx context.Context, req *generated.EventRequest) (*generated.ServerResponse, error) {
+	event, err := server.ParseEvent(req.Event, false)
 	if err != nil {
 		return nil, err
 	}
 	if err := c.app.UpdateEvent(event); err != nil {
-		return nil, fmt.Errorf("didnt updated the event %w", err)
+		return nil, fmt.Errorf(server.ErrCantUpdateEventFormat, err)
 	}
 	return successResponse, nil
 }
 
-func (c *CalendarService) Delete(ctx context.Context, req *grpcapi.EventRequest) (*grpcapi.ServerResponse, error) {
-	event, err := storage.ParseEvent(req.Event, false)
+func (c *CalendarService) Delete(ctx context.Context, req *generated.EventRequest) (*generated.ServerResponse, error) {
+	event, err := server.ParseEvent(req.Event, false)
 	if err != nil {
 		return nil, err
 	}
 	if err := c.app.DeleteEvent(event); err != nil {
-		return nil, fmt.Errorf("didnt deleted the event %w", err)
+		return nil, fmt.Errorf(server.ErrCantDeleteEventFormat, err)
 	}
 	return successResponse, nil
 }
 
-func (c *CalendarService) ListEventsOnADay(ctx context.Context, req *grpcapi.ListEventsRequest) (*grpcapi.ServerResponse, error) {
+func (c *CalendarService) ListEventsOnADay(ctx context.Context, req *generated.ListEventsRequest) (*generated.ServerResponse, error) {
 	return c.listEvents(req, c.app.ListEventsOnADay)
 }
 
-func (c *CalendarService) ListEventsOnAWeek(ctx context.Context, req *grpcapi.ListEventsRequest) (*grpcapi.ServerResponse, error) {
+func (c *CalendarService) ListEventsOnAWeek(ctx context.Context, req *generated.ListEventsRequest) (*generated.ServerResponse, error) {
 	return c.listEvents(req, c.app.ListEventsOnAWeek)
 }
 
-func (c *CalendarService) ListEventsOnAMonth(ctx context.Context, req *grpcapi.ListEventsRequest) (*grpcapi.ServerResponse, error) {
+func (c *CalendarService) ListEventsOnAMonth(ctx context.Context, req *generated.ListEventsRequest) (*generated.ServerResponse, error) {
 	return c.listEvents(req, c.app.ListEventsOnAMonth)
 }
 
-func (c *CalendarService) listEvents(req *grpcapi.ListEventsRequest, listEventsFunc storage.ListEventsFunction) (*grpcapi.ServerResponse, error) {
-	date, err := time.Parse(storage.RequestDateFormat, req.Date)
+func (c *CalendarService) listEvents(req *generated.ListEventsRequest, listEventsFunc storage.ListEventsFunction) (*generated.ServerResponse, error) {
+	requestDate, err := time.Parse(storage.RequestDateFormat, req.Date)
 	if err != nil {
-		return nil, fmt.Errorf("didnt parsed the date %w", err)
+		return nil, fmt.Errorf(server.ErrCantParseDateFormat, err)
 	}
-	eventsSlice, err := listEventsFunc(date)
+
+	eventsSlice, err := listEventsFunc(requestDate)
 	if err != nil {
-		return nil, fmt.Errorf("didnt listed the week events %w", err)
+		return nil, fmt.Errorf(server.ErrCantListEventsFormat, err)
 	}
+
 	events, err := json.Marshal(eventsSlice)
 	if err != nil {
-		return nil, fmt.Errorf("didnt marshal the events %w", err)
+		return nil, fmt.Errorf(server.ErrCantMarshalEventsFormat, err)
 	}
-	return &grpcapi.ServerResponse{
+
+	return &generated.ServerResponse{
 		Data:  string(events),
-		Error: EmptyErrorResponse,
+		Error: server.EmptyErrorResponse,
 	}, nil
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/thewolf27/hw12_13_14_15_calendar/internal/app"
+	"github.com/thewolf27/hw12_13_14_15_calendar/internal/server"
 	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage"
 	memorystorage "github.com/thewolf27/hw12_13_14_15_calendar/internal/storage/memory"
 )
@@ -26,7 +27,7 @@ var event = storage.Event{
 	EndAt:   time.Date(2019, 05, 06, 05, 13, 58, 10, time.Time{}.UTC().Location()),
 }
 
-var eventReq = storage.EventRequest{
+var eventReq = server.EventRequest{
 	ID:                 1,
 	Title:              "test",
 	Descr:              "testdes2",
@@ -44,8 +45,8 @@ func (l loggerMock) Error(msg string) {}
 
 func NewServerMock() *Server {
 	l := loggerMock{}
-	m := memorystorage.New()
-	app := app.New(l, m)
+	app := app.New(l, memorystorage.New())
+
 	return NewServer(l, app, "localhost", "9999")
 }
 
@@ -57,15 +58,15 @@ func TestCreateEvent(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/create", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
-	server.Create(w, req)
+	server.create(w, req)
 
 	res := w.Result()
 	defer res.Body.Close()
+	require.Equal(t, http.StatusOK, res.StatusCode)
 
 	data, err := ioutil.ReadAll(res.Body)
 	require.NoError(t, err)
 	require.Equal(t, expectedSuccessJSON, string(data))
-	require.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 func TestUpdateEvent(t *testing.T) {
@@ -80,15 +81,15 @@ func TestUpdateEvent(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPut, "/update", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
-	server.Update(w, req)
+	server.update(w, req)
 
 	res := w.Result()
 	defer res.Body.Close()
+	require.Equal(t, http.StatusOK, res.StatusCode)
 
 	data, err := ioutil.ReadAll(res.Body)
 	require.NoError(t, err)
 	require.Equal(t, expectedSuccessJSON, string(data))
-	require.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 func TestDeleteEvent(t *testing.T) {
@@ -101,15 +102,15 @@ func TestDeleteEvent(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodDelete, "/delete", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
-	server.Delete(w, req)
+	server.delete(w, req)
 
 	res := w.Result()
 	defer res.Body.Close()
+	require.Equal(t, http.StatusOK, res.StatusCode)
 
 	data, err := ioutil.ReadAll(res.Body)
 	require.NoError(t, err)
 	require.Equal(t, expectedSuccessJSON, string(data))
-	require.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 func TestListADayEvents(t *testing.T) {
@@ -128,17 +129,18 @@ func TestListADayEvents(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/list-a-day", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
-	server.ListEventsOnADay(w, req)
+	server.listEventsOnADay(w, req)
 
 	res := w.Result()
 	defer res.Body.Close()
 
 	data, err := ioutil.ReadAll(res.Body)
 	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, res.StatusCode)
+
 	expected, err := json.Marshal(serverResponse{
 		Data: storage.EventsSlice{event},
 	})
 	require.NoError(t, err)
 	require.Equal(t, expected, data)
-	require.Equal(t, http.StatusOK, res.StatusCode)
 }

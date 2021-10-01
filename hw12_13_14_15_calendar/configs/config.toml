@@ -2,6 +2,8 @@
 level = "DEBUG"
 [db]
 dsn = "host=localhost user=homestead password=secret dbname=homestead sslmode=disable"
+[rabbitmq]
+url = "amqp://guest:guest@localhost:5672/"
 [storage]
 type = "db"
 [httpserver]

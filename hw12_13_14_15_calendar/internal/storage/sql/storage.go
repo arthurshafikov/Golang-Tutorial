@@ -11,7 +11,14 @@ import (
 )
 
 const (
-	EventsTable = "events"
+	EventsTable                   = "events"
+	EventStartAtColumn            = "start_at"
+	EventEndAtColumn              = "end_at"
+	EventSendNotificationAtColumn = "send_notification_at"
+	EventIsSentColumn             = "is_sent"
+	EventsColumns                 = "title, descr, owner, start_at, end_at, send_notification_at, is_sent"
+	EventsIsSentFalse             = "f"
+	EventsIsSentTrue              = "t"
 )
 
 type Storage struct {
@@ -45,12 +52,12 @@ func (s *Storage) Close() error {
 }
 
 func (s *Storage) Add(event storage.Event) error {
-	if s.checkIfStartDateTimeIsBusy(event) {
-		return storage.ErrDateBusy
+	if s.checkIfStartAtIsBusy(event) {
+		return storage.ErrStartAtBusy
 	}
 	_, err := s.db.Exec(
-		fmt.Sprintf("INSERT INTO %s (title, descr, owner, start_at, end_at, send_notification_at) VALUES($1, $2, $3, $4, $5, $6);", EventsTable),
-		event.Title, event.Descr, event.Owner, event.StartAt, event.EndAt, event.SendNotificationAt,
+		fmt.Sprintf("INSERT INTO %s (%s) VALUES($1, $2, $3, $4, $5, $6, $7);", EventsTable, EventsColumns),
+		event.Title, event.Descr, event.Owner, event.StartAt, event.EndAt, event.SendNotificationAt, EventsIsSentFalse,
 	)
 	if err != nil {
 		return err
@@ -59,12 +66,12 @@ func (s *Storage) Add(event storage.Event) error {
 }
 
 func (s *Storage) Change(event storage.Event) error {
-	if s.checkIfStartDateTimeIsBusy(event) {
-		return storage.ErrDateBusy
+	if s.checkIfStartAtIsBusy(event) {
+		return storage.ErrStartAtBusy
 	}
 	res, err := s.db.Exec(
-		fmt.Sprintf("UPDATE %s SET (title, descr, owner, start_at, end_at, send_notification_at) = ($1, $2, $3, $4, $5, $6) WHERE id=$7;", EventsTable),
-		event.Title, event.Descr, event.Owner, event.StartAt, event.EndAt, event.SendNotificationAt, event.ID,
+		fmt.Sprintf("UPDATE %s SET (%s) = ($1, $2, $3, $4, $5, $6, $7) WHERE id=$8;", EventsTable, EventsColumns),
+		event.Title, event.Descr, event.Owner, event.StartAt, event.EndAt, event.SendNotificationAt, event.IsSent, event.ID,
 	)
 	if err != nil {
 		return err
@@ -97,26 +104,44 @@ func (s *Storage) Delete(event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) ListEventsOnADay(t time.Time) (storage.EventsSlice, error) {
+func (s *Storage) ListEventsOnADay(date time.Time) (storage.EventsSlice, error) {
 	events := storage.EventsSlice{}
 
-	err := s.db.Select(&events, fmt.Sprintf("SELECT * FROM %s WHERE DATE(start_at)=$1;", EventsTable),
-		t.Format(storage.RequestDateFormat))
+	err := s.db.Select(&events, fmt.Sprintf("SELECT * FROM %s WHERE DATE(%s)=$1;", EventsTable, EventStartAtColumn),
+		date.Format(storage.RequestDateFormat))
 
 	return events, err
 }
 
-func (s *Storage) ListEventsOnARange(t time.Time, tMax time.Time) (storage.EventsSlice, error) {
+func (s *Storage) ListEventsOnARange(timeStart, timePlusRange time.Time) (storage.EventsSlice, error) {
 	events := storage.EventsSlice{}
 
-	err := s.db.Select(&events, fmt.Sprintf("SELECT * FROM %s WHERE start_at BETWEEN $1 AND $2;", EventsTable),
-		t.Format(storage.RequestDateTimeFormat), tMax.Format(storage.RequestDateTimeFormat))
+	err := s.db.Select(&events, fmt.Sprintf("SELECT * FROM %s WHERE %s BETWEEN $1 AND $2;", EventsTable, EventStartAtColumn),
+		timeStart.Format(storage.RequestDateTimeFormat), timePlusRange.Format(storage.RequestDateTimeFormat))
 
 	return events, err
 }
 
-func (s *Storage) checkIfStartDateTimeIsBusy(event storage.Event) bool {
-	res, err := s.db.Exec(fmt.Sprintf("SELECT * FROM %s WHERE start_at=$1;", EventsTable), event.StartAt)
+func (s *Storage) GetEventsThatNeedToBeSend(timeTo time.Time) (storage.EventsSlice, error) {
+	events := storage.EventsSlice{}
+
+	err := s.db.Select(&events, fmt.Sprintf("SELECT * FROM %s WHERE %s <= $1 AND %s = 'f';", EventsTable, EventSendNotificationAtColumn, EventIsSentColumn),
+		timeTo.Format(storage.RequestDateTimeFormat))
+
+	return events, err
+}
+
+func (s *Storage) GetEventsWhereEndAtBeforeGivenTimestamp(timeTo time.Time) (storage.EventsSlice, error) {
+	events := storage.EventsSlice{}
+
+	err := s.db.Select(&events, fmt.Sprintf("SELECT * FROM %s WHERE %s <= $1;", EventsTable, EventEndAtColumn),
+		timeTo.Format(storage.RequestDateTimeFormat))
+
+	return events, err
+}
+
+func (s *Storage) checkIfStartAtIsBusy(event storage.Event) bool {
+	res, err := s.db.Exec(fmt.Sprintf("SELECT * FROM %s WHERE %s=$1 AND id!=$2;", EventsTable, EventStartAtColumn), event.StartAt, event.ID)
 	if err != nil {
 		return true
 	}

@@ -1,8 +1,17 @@
 package logger
 
 import (
-	"log"
 	"os"
+)
+
+const (
+	ErrorLevel          = "ERROR"
+	WarnLevel           = "WARN"
+	InfoLevel           = "INFO"
+	DebugLevel          = "DEBUG"
+	InfoLogBeginString  = "Info Log: "
+	WarnLogBeginString  = "Warn Log: "
+	ErrorLogBeginString = "Error Log: "
 )
 
 type LogLevelMap map[string]int
@@ -16,43 +25,39 @@ type Logger struct {
 func New(level string, logFilePath string) *Logger {
 	logfile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		// todo
-		log.Println(err)
 		panic("log file is not found")
 	}
+
 	return &Logger{
 		Level:   level,
 		LogFile: logfile,
 		LogLevelMap: LogLevelMap{
-			"ERROR": 1,
-			"WARN":  2,
-			"INFO":  3,
-			"DEBUG": 4,
+			ErrorLevel: 1,
+			WarnLevel:  2,
+			InfoLevel:  3,
+			DebugLevel: 4,
 		},
 	}
 }
 
 func (l Logger) Info(msg string) {
-	if l.checkLogLevel("INFO") {
-		l.LogFile.WriteString("Info log: " + msg + "\n")
-		// log.Println("Info log: ", msg)
+	if l.shouldReportLogLevel(InfoLevel) {
+		l.LogFile.WriteString(InfoLogBeginString + msg + "\n")
 	}
 }
 
 func (l Logger) Warn(msg string) {
-	if l.checkLogLevel("WARN") {
-		l.LogFile.WriteString("Warn log: " + msg + "\n")
-		// log.Println("Warn log: ", msg)
+	if l.shouldReportLogLevel(WarnLevel) {
+		l.LogFile.WriteString(WarnLogBeginString + msg + "\n")
 	}
 }
 
 func (l Logger) Error(msg string) {
-	if l.checkLogLevel("ERROR") {
-		l.LogFile.WriteString("Err log: " + msg + "\n")
-		// log.Println("Err log: ", msg)
+	if l.shouldReportLogLevel(ErrorLevel) {
+		l.LogFile.WriteString(ErrorLogBeginString + msg + "\n")
 	}
 }
 
-func (l Logger) checkLogLevel(requiredLevel string) bool {
+func (l Logger) shouldReportLogLevel(requiredLevel string) bool {
 	return l.LogLevelMap[l.Level]-l.LogLevelMap[requiredLevel] >= 0
 }
