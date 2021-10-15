@@ -55,13 +55,13 @@ func TestAddEvent(t *testing.T) {
 	event := events[0]
 
 	mock.ExpectExec(fmt.Sprintf("SELECT (.+) FROM %s", EventsTable)).WithArgs(
-		event.StartAt, event.ID,
+		event.StartAt, 0,
 	).WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectExec(fmt.Sprintf("INSERT INTO %s", EventsTable)).WithArgs(
+	mock.ExpectQuery(fmt.Sprintf("INSERT INTO %s", EventsTable)).WithArgs(
 		event.Title, event.Descr, event.Owner, event.StartAt, event.EndAt, event.SendNotificationAt, EventsIsSentFalse,
-	).WillReturnResult(sqlmock.NewResult(1, 1))
+	).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
-	err := mockStorage.Add(event)
+	_, err := mockStorage.Add(event)
 	require.NoError(t, err)
 
 	err = mock.ExpectationsWereMet()
@@ -77,11 +77,11 @@ func TestChangeEvent(t *testing.T) {
 	mock.ExpectExec(fmt.Sprintf("SELECT (.+) FROM %s", EventsTable)).WithArgs(
 		event.StartAt, event.ID,
 	).WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectExec(fmt.Sprintf("UPDATE %s SET", EventsTable)).WithArgs(
+	mock.ExpectQuery(fmt.Sprintf("UPDATE %s SET", EventsTable)).WithArgs(
 		event.Title, event.Descr, event.Owner, event.StartAt, event.EndAt, event.SendNotificationAt, event.IsSent, event.ID,
-	).WillReturnResult(sqlmock.NewResult(1, 1))
+	).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
-	err := mockStorage.Change(event)
+	_, err := mockStorage.Change(event)
 	require.NoError(t, err)
 
 	err = mock.ExpectationsWereMet()
@@ -125,16 +125,20 @@ func TestDeleteEvent(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestListTodayEvents(t *testing.T) {
+func TestListEventsOnADay(t *testing.T) {
 	mockDB, mock, mockStorage := newSQLStorageMock(t)
 	defer mockDB.Close()
 
+	dateToListAt := time.Date(2019, 04, 10, 0, 0, 0, 0, time.Time{}.UTC().Location())
+
 	event1 := events[0]
+	event1.StartAt = dateToListAt
 	event2 := events[0]
+	event2.StartAt = dateToListAt.Add(24 * time.Hour)
 
 	mock.ExpectQuery(
 		fmt.Sprintf("SELECT (.+) FROM %s WHERE DATE\\(start_at\\)", EventsTable),
-	).WithArgs(event1.StartAt.Format(storage.RequestDateFormat)).WillReturnRows(
+	).WithArgs(dateToListAt.Format(storage.RequestDateFormat)).WillReturnRows(
 		sqlmock.NewRows(eventColumns).AddRow(
 			event1.ID, event1.Title, event1.Descr, event1.Owner, event1.StartAt, event1.EndAt, event1.SendNotificationAt, event1.IsSent,
 		).AddRow(
@@ -151,59 +155,38 @@ func TestListTodayEvents(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestListWeekEvents(t *testing.T) {
+func TestListEventsOnARange(t *testing.T) {
 	mockDB, mock, mockStorage := newSQLStorageMock(t)
 	defer mockDB.Close()
 
-	event1 := events[0]
-	event2 := events[0]
-	event2.StartAt = event2.StartAt.Add(time.Hour * 24 * 2)
-	timePlusWeek := event1.StartAt.Add(7 * time.Hour * 24)
+	expectedEvents := storage.EventsSlice{}
 
-	mock.ExpectQuery(
-		fmt.Sprintf("SELECT (.+) FROM %s WHERE start_at BETWEEN", EventsTable),
-	).WithArgs(event1.StartAt.Format(storage.RequestDateTimeFormat), timePlusWeek.Format(storage.RequestDateTimeFormat)).WillReturnRows(
-		sqlmock.NewRows(eventColumns).AddRow(
-			event1.ID, event1.Title, event1.Descr, event1.Owner, event1.StartAt, event1.EndAt, event1.SendNotificationAt, event1.IsSent,
-		).AddRow(
-			event2.ID, event2.Title, event2.Descr, event2.Owner, event2.StartAt, event2.EndAt, event2.SendNotificationAt, event2.IsSent,
-		),
-	)
+	rangeDifferenceInDays := 3
+	rangeStartTime := time.Date(2020, 01, 10, 0, 0, 0, 0, time.Now().Location())
+	rangeEndTime := rangeStartTime.Add(time.Duration(rangeDifferenceInDays) * time.Hour * 24)
 
-	result, err := mockStorage.ListEventsOnARange(event1.StartAt, timePlusWeek)
-	require.NoError(t, err)
-	expected := storage.EventsSlice{event1, event2}
-	require.Equal(t, expected, result)
-
-	err = mock.ExpectationsWereMet()
-	require.NoError(t, err)
-}
-
-func TestListMonthEvents(t *testing.T) {
-	mockDB, mock, mockStorage := newSQLStorageMock(t)
-	defer mockDB.Close()
-
-	mockReturnRows := sqlmock.NewRows(eventColumns)
-	expected := storage.EventsSlice{}
-
+	returnResultSQL := sqlmock.NewRows(eventColumns)
 	for i := 0; i < 10; i++ {
 		event := events[0]
-		event.StartAt = event.StartAt.Add(time.Hour * 24 * 10 * time.Duration(i))
-		if i < 3 {
-			expected = append(expected, event)
-			mockReturnRows.AddRow(event.ID, event.Title, event.Descr, event.Owner, event.StartAt, event.EndAt, event.SendNotificationAt, event.IsSent)
+		event.StartAt = rangeStartTime.Add(time.Duration(i) * time.Hour * 24)
+
+		if i < rangeDifferenceInDays {
+			returnResultSQL.AddRow(
+				event.ID, event.Title, event.Descr, event.Owner, event.StartAt, event.EndAt, event.SendNotificationAt, event.IsSent,
+			)
+			expectedEvents = append(expectedEvents, event)
 		}
 	}
 
-	timePlusMonth := events[0].StartAt.Add(7 * time.Hour * 24)
+	mock.ExpectQuery(
+		fmt.Sprintf("SELECT (.+) FROM %s WHERE start_at BETWEEN", EventsTable),
+	).WithArgs(rangeStartTime.Format(storage.RequestDateTimeFormat), rangeEndTime.Format(storage.RequestDateTimeFormat)).WillReturnRows(
+		returnResultSQL,
+	)
 
-	mock.ExpectQuery(fmt.Sprintf("SELECT (.+) FROM %s WHERE start_at BETWEEN", EventsTable)).
-		WithArgs(events[0].StartAt.Format(storage.RequestDateTimeFormat), timePlusMonth.Format(storage.RequestDateTimeFormat)).
-		WillReturnRows(mockReturnRows)
-
-	result, err := mockStorage.ListEventsOnARange(events[0].StartAt, timePlusMonth)
+	result, err := mockStorage.ListEventsOnARange(rangeStartTime, rangeEndTime)
 	require.NoError(t, err)
-	require.Equal(t, expected, result)
+	require.Equal(t, expectedEvents, result)
 
 	err = mock.ExpectationsWereMet()
 	require.NoError(t, err)
@@ -274,10 +257,10 @@ func TestBusyTimeAdd(t *testing.T) {
 	event := events[0]
 
 	mock.ExpectExec(fmt.Sprintf("SELECT (.+) FROM %s", EventsTable)).WithArgs(
-		event.StartAt, event.ID,
+		event.StartAt, 0,
 	).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err := mockStorage.Add(event)
+	_, err := mockStorage.Add(event)
 	require.ErrorIs(t, err, storage.ErrStartAtBusy)
 
 	err = mock.ExpectationsWereMet()

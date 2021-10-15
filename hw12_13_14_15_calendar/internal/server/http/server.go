@@ -19,8 +19,8 @@ type Logger interface {
 }
 
 type Application interface {
-	CreateEvent(storage.Event) error
-	UpdateEvent(storage.Event) error
+	CreateEvent(storage.Event) (int64, error)
+	UpdateEvent(storage.Event) (int64, error)
 	DeleteEvent(storage.Event) error
 	ListEventsOnADay(time.Time) (storage.EventsSlice, error)
 	ListEventsOnAWeek(time.Time) (storage.EventsSlice, error)
@@ -57,6 +57,7 @@ func (s *Server) Start(ctx context.Context) error {
 	server := http.Server{Addr: fmt.Sprintf("%v:%v", s.Host, s.Port), Handler: m}
 	s.Server = &server
 
+	m.Handle("/", s.loggingMiddleware(http.HandlerFunc(s.home)))
 	m.Handle("/create", s.loggingMiddleware(http.HandlerFunc(s.create)))
 	m.Handle("/update", s.loggingMiddleware(http.HandlerFunc(s.update)))
 	m.Handle("/delete", s.loggingMiddleware(http.HandlerFunc(s.delete)))
@@ -75,13 +76,17 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
+func (s *Server) home(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, string("OK"))
+}
+
 func (s *Server) create(w http.ResponseWriter, r *http.Request) {
 	event, err := server.DecodeJSONEvent(r.Body, true)
 	if err != nil {
 		s.writeJSONError(w, err)
 		return
 	}
-	if err = s.App.CreateEvent(event); err != nil {
+	if _, err = s.App.CreateEvent(event); err != nil {
 		s.writeJSONError(w, fmt.Errorf(server.ErrCantCreateEventFormat, err))
 		return
 	}
@@ -94,7 +99,7 @@ func (s *Server) update(w http.ResponseWriter, r *http.Request) {
 		s.writeJSONError(w, err)
 		return
 	}
-	if err = s.App.UpdateEvent(event); err != nil {
+	if _, err = s.App.UpdateEvent(event); err != nil {
 		s.writeJSONError(w, fmt.Errorf(server.ErrCantUpdateEventFormat, err))
 		return
 	}

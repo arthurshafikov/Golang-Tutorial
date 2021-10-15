@@ -20,8 +20,8 @@ type Logger interface {
 }
 
 type Storage interface {
-	Add(storage.Event) error
-	Change(storage.Event) error
+	Add(storage.Event) (int64, error)
+	Change(storage.Event) (int64, error)
 	Get(storage.Event) (storage.Event, error)
 	Delete(storage.Event) error
 	ListEventsOnADay(time.Time) (storage.EventsSlice, error)
@@ -37,11 +37,11 @@ func New(logger Logger, storage Storage) *App {
 	}
 }
 
-func (a *App) CreateEvent(event storage.Event) error {
+func (a *App) CreateEvent(event storage.Event) (int64, error) {
 	return a.Storage.Add(event)
 }
 
-func (a *App) UpdateEvent(event storage.Event) error {
+func (a *App) UpdateEvent(event storage.Event) (int64, error) {
 	return a.Storage.Change(event)
 }
 

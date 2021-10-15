@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -12,8 +11,6 @@ const (
 )
 
 type EventsSlice []Event
-
-type ListEventsFunction func(time.Time) (EventsSlice, error)
 
 type Event struct {
 	ID                 int64
@@ -26,7 +23,4 @@ type Event struct {
 	IsSent             bool      `db:"is_sent"`
 }
 
-var (
-	ErrStartAtBusy = fmt.Errorf("the start_at time is busy")
-	ErrNotFound    = fmt.Errorf("not found")
-)
+type ListEventsFunction func(time.Time) (EventsSlice, error)

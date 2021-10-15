@@ -10,10 +10,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/app"
 	"github.com/thewolf27/hw12_13_14_15_calendar/internal/server"
 	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage"
-	memorystorage "github.com/thewolf27/hw12_13_14_15_calendar/internal/storage/memory"
 )
 
 const expectedSuccessJSON = `{"data":"Success","error":null}`
@@ -43,9 +41,35 @@ func (l loggerMock) Info(msg string)  {}
 func (l loggerMock) Warn(msg string)  {}
 func (l loggerMock) Error(msg string) {}
 
+type appMock struct{}
+
+func (app appMock) CreateEvent(event storage.Event) (int64, error) {
+	return 0, nil
+}
+
+func (app appMock) UpdateEvent(event storage.Event) (int64, error) {
+	return 0, nil
+}
+
+func (app appMock) DeleteEvent(event storage.Event) error {
+	return nil
+}
+
+func (app appMock) ListEventsOnADay(date time.Time) (storage.EventsSlice, error) {
+	return storage.EventsSlice{event}, nil
+}
+
+func (app appMock) ListEventsOnAWeek(startAt time.Time) (storage.EventsSlice, error) {
+	return storage.EventsSlice{}, nil
+}
+
+func (app appMock) ListEventsOnAMonth(startAt time.Time) (storage.EventsSlice, error) {
+	return storage.EventsSlice{}, nil
+}
+
 func NewServerMock() *Server {
 	l := loggerMock{}
-	app := app.New(l, memorystorage.New())
+	app := appMock{}
 
 	return NewServer(l, app, "localhost", "9999")
 }
@@ -72,10 +96,6 @@ func TestCreateEvent(t *testing.T) {
 func TestUpdateEvent(t *testing.T) {
 	server := NewServerMock()
 
-	server.App.CreateEvent(event)
-
-	eventReq.ID = event.ID
-	eventReq.Title = "New Title"
 	body, err := json.Marshal(eventReq)
 	require.NoError(t, err)
 
@@ -95,8 +115,6 @@ func TestUpdateEvent(t *testing.T) {
 func TestDeleteEvent(t *testing.T) {
 	server := NewServerMock()
 
-	server.App.CreateEvent(event)
-
 	body, err := json.Marshal(eventReq)
 	require.NoError(t, err)
 
@@ -115,8 +133,6 @@ func TestDeleteEvent(t *testing.T) {
 
 func TestListADayEvents(t *testing.T) {
 	server := NewServerMock()
-
-	server.App.CreateEvent(event)
 
 	request := struct {
 		Date string `json:"date"`

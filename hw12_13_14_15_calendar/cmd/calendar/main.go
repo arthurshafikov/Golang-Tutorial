@@ -17,7 +17,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	config, logg := launch.Initializate()
+	config, logg := launch.InitializateConfigAndLoggerFromFlags()
 
 	storage, err := resolver.ResolveStorage(ctx, config)
 	if err != nil {

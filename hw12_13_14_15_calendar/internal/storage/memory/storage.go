@@ -16,31 +16,32 @@ func New() *Storage {
 	return &Storage{}
 }
 
-func (s *Storage) Add(event storage.Event) error {
+func (s *Storage) Add(event storage.Event) (int64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.checkIfStartAtIsBusy(event) {
-		return storage.ErrStartAtBusy
+		return 0, storage.ErrStartAtBusy
 	}
 	s.Events = append(s.Events, event)
-	return nil
+
+	return event.ID, nil
 }
 
-func (s *Storage) Change(event storage.Event) error {
+func (s *Storage) Change(event storage.Event) (int64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	for i, e := range s.Events {
 		if e.ID == event.ID {
 			if s.checkIfStartAtIsBusy(event) {
-				return storage.ErrStartAtBusy
+				return 0, storage.ErrStartAtBusy
 			}
 			s.Events[i] = event
 		}
 	}
 
-	return nil
+	return event.ID, nil
 }
 
 func (s *Storage) Get(event storage.Event) (storage.Event, error) {
@@ -78,11 +79,11 @@ func (s *Storage) ListEventsOnADay(date time.Time) (storage.EventsSlice, error) 
 	return events, nil
 }
 
-func (s *Storage) ListEventsOnARange(timeStart, timePlusRange time.Time) (storage.EventsSlice, error) {
+func (s *Storage) ListEventsOnARange(rangeStartTime, rangeEndTime time.Time) (storage.EventsSlice, error) {
 	events := storage.EventsSlice{}
 	for _, e := range s.Events {
-		if (timePlusRange.After(e.StartAt) && timeStart.Before(e.StartAt)) ||
-			timeStart.Equal(e.StartAt) {
+		if (rangeEndTime.After(e.StartAt) && rangeStartTime.Before(e.StartAt)) ||
+			rangeStartTime.Equal(e.StartAt) {
 			events = append(events, e)
 		}
 	}

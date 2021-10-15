@@ -1,0 +1,42 @@
+version: '3'
+
+networks:
+  integration-tests:
+    driver: bridge
+
+services:
+  integration-tests:
+    build:
+      context: ./
+      dockerfile: ./build/tests/Dockerfile
+    container_name: integration-tests
+    environment:
+      WAIT_HOSTS: test-db:5432, test-rabbitmq:5672
+      WAIT_AFTER: 2
+      DSN: ${TESTS_DSN}
+      RABBITMQ_URL: ${TESTS_RABBITMQ_URL}
+    volumes:
+      - ./tests/int-log.txt:/go/src/tests/int-log.txt
+    depends_on: 
+      - test-db
+      - test-rabbitmq
+    networks:
+      - integration-tests
+  test-db:
+    image: postgres
+    container_name: test-postgres
+    restart: on-failure
+    environment:
+      POSTGRES_DB: homestead_test
+      POSTGRES_USER: homestead
+      POSTGRES_PASSWORD: secret
+    networks:
+      - integration-tests
+  test-rabbitmq:
+    image: rabbitmq
+    container_name: test-rabbitmq
+    environment:
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    networks:
+      - integration-tests

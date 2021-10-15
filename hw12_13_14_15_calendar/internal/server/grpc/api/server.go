@@ -12,8 +12,8 @@ import (
 )
 
 type Application interface {
-	CreateEvent(storage.Event) error
-	UpdateEvent(storage.Event) error
+	CreateEvent(storage.Event) (int64, error)
+	UpdateEvent(storage.Event) (int64, error)
 	DeleteEvent(storage.Event) error
 	ListEventsOnADay(time.Time) (storage.EventsSlice, error)
 	ListEventsOnAWeek(time.Time) (storage.EventsSlice, error)

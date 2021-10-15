@@ -1,14 +1,79 @@
-version: '3.1'
+version: '3'
 
 services:
-  db:
+  calendar:
     build:
-      context: ./build/sql
-    container_name: postgres
+      context: ./
+      dockerfile: ./build/calendar/Dockerfile
+    container_name: calendar
+    restart: on-failure
+    environment:
+      WAIT_HOSTS: db:5432
+      DSN: ${DSN}
+    ports: 
+      - ${CALENDAR_HTTP_PORT}:1234
+      - ${CALENDAR_GRPC_PORT}:2345
+    volumes:
+      - ./logs/log.txt:/etc/calendar/log.txt
+    depends_on: 
+      - db 
+  scheduler:
+    build:
+      context: ./
+      dockerfile: ./build/scheduler/Dockerfile
+    container_name: scheduler
     restart: always
     environment:
-      POSTGRES_DATABASE: homestead
-      POSTGRES_USERNAME: homestead
-      POSTGRES_PASSWORD: secret
+      WAIT_HOSTS: db:5432, rabbitmq:5672
+      DSN: ${DSN}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    volumes:
+      - ./logs/log-scheduler.txt:/etc/scheduler/log-scheduler.txt
+    depends_on: 
+      - db
+      - rabbitmq
+  sender:
+    build:
+      context: ./
+      dockerfile: ./build/sender/Dockerfile
+    container_name: sender
+    restart: always
+    environment:
+      WAIT_HOSTS: rabbitmq:5672
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    volumes:
+      - ./logs/log-sender.txt:/etc/sender/log-sender.txt
+    depends_on: 
+      - rabbitmq 
+  db:
+    image: postgres
+    container_name: postgres
+    restart: on-failure
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports: 
-      - "5432:5432"
+      - 5432:5432
+  migrate:
+    build:
+      context: ./
+      dockerfile: ./build/migrations/Dockerfile
+    container_name: calendar_migrate
+    restart: on-failure
+    environment:
+      WAIT_HOSTS: db:5432
+      DSN: ${DSN}
+    volumes:
+      - ./migrations:/migrations
+    depends_on: 
+      - db 
+  rabbitmq:
+    image: rabbitmq
+    container_name: calendar_rabbitmq
+    environment:
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+    ports: 
+      - 5672:5672
+      - 15672:15672
