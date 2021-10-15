@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/config"
 	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage"
 	"github.com/thewolf27/hw12_13_14_15_calendar/pkg/rabbitmq"
 )
@@ -18,24 +17,24 @@ const (
 )
 
 type Scheduler struct {
-	Logger   Logger
-	Storage  Storage
-	Config   config.Config
-	RabbitMQ *rabbitmq.RabbitMQ
+	Logger      Logger
+	Storage     Storage
+	RabbitMqURL string
+	RabbitMq    *rabbitmq.RabbitMQ
 }
 
 type Notification struct {
 	ID    int64
 	Title string
-	Date  time.Time
+	Date  string
 	Owner int64
 }
 
-func NewScheduler(logger Logger, storage Storage, config config.Config) *Scheduler {
+func NewScheduler(logger Logger, storage Storage, rabbitMqURL string) *Scheduler {
 	return &Scheduler{
-		Logger:  logger,
-		Storage: storage,
-		Config:  config,
+		Logger:      logger,
+		Storage:     storage,
+		RabbitMqURL: rabbitMqURL,
 	}
 }
 
@@ -62,34 +61,32 @@ OUTER:
 			break OUTER
 		}
 
-		go s.deleteOldEvents()
-
 		for _, e := range events {
 			notification := Notification{
 				ID:    e.ID,
 				Title: e.Title,
 				Owner: e.Owner,
-				Date:  e.StartAt,
-			}
-			if err := s.sendNotificationToQueue(notification); err != nil {
-				s.Logger.Error(err.Error())
-				return
+				Date:  e.StartAt.Format(storage.RequestDateTimeFormat),
 			}
 			if err := s.setEventIsSentFieldTrue(e); err != nil {
 				s.Logger.Error(err.Error())
 				return
 			}
+			if err := s.sendNotificationToQueue(notification); err != nil {
+				s.Logger.Error(err.Error())
+				return
+			}
 		}
-		log.Println("Ticking every 3 seconds")
+		s.deleteOldEvents()
 	}
 }
 
 func (s *Scheduler) connect(ctx context.Context) error {
-	rabbitMQ, err := rabbitmq.New(ctx, s.Config.RabbitMq.URL, QueueName)
+	rabbitMQ, err := rabbitmq.New(ctx, s.RabbitMqURL, QueueName)
 	if err != nil {
 		return err
 	}
-	s.RabbitMQ = rabbitMQ
+	s.RabbitMq = rabbitMQ
 
 	return nil
 }
@@ -119,7 +116,7 @@ func (s *Scheduler) sendNotificationToQueue(notification Notification) error {
 	if err != nil {
 		return err
 	}
-	if err := s.RabbitMQ.SendToQueue(message); err != nil {
+	if err := s.RabbitMq.SendToQueue(message); err != nil {
 		return err
 	}
 	log.Printf(" [x] Sent %s", message)
@@ -129,7 +126,7 @@ func (s *Scheduler) sendNotificationToQueue(notification Notification) error {
 
 func (s *Scheduler) setEventIsSentFieldTrue(event storage.Event) error {
 	event.IsSent = true
-	if err := s.Storage.Change(event); err != nil {
+	if _, err := s.Storage.Change(event); err != nil {
 		return err
 	}
 

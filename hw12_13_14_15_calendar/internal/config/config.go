@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"os"
 
 	"github.com/BurntSushi/toml"
 )
@@ -42,5 +43,9 @@ func NewConfig(configFilePath string) Config {
 	if err != nil {
 		log.Fatalln("Error decode config file...")
 	}
+
+	config.DB.Dsn = os.Getenv("DSN")
+	config.RabbitMq.URL = os.Getenv("RABBITMQ_URL")
+
 	return config
 }

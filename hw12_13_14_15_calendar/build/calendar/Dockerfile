@@ -16,6 +16,7 @@ COPY . ${CODE_DIR}
 # Собираем статический бинарник Go (без зависимостей на Си API),
 # иначе он не будет работать в alpine образе.
 ARG LDFLAGS
+
 RUN CGO_ENABLED=0 go build \
         -ldflags "$LDFLAGS" \
         -o ${BIN_FILE} cmd/calendar/*
@@ -23,9 +24,7 @@ RUN CGO_ENABLED=0 go build \
 # На выходе тонкий образ
 FROM alpine:3.9
 
-LABEL ORGANIZATION="OTUS Online Education"
-LABEL SERVICE="calendar"
-LABEL MAINTAINERS="student@otus.ru"
+LABEL MAINTAINERS="thewolf27"
 
 ENV BIN_FILE "/opt/calendar/calendar-app"
 COPY --from=build ${BIN_FILE} ${BIN_FILE}
@@ -33,4 +32,12 @@ COPY --from=build ${BIN_FILE} ${BIN_FILE}
 ENV CONFIG_FILE /etc/calendar/config.toml
 COPY ./configs/config.toml ${CONFIG_FILE}
 
-CMD ${BIN_FILE} -config ${CONFIG_FILE}
+ENV LOG_FILE /etc/calendar/log.txt
+COPY ./logs/log.txt ${LOG_FILE}
+
+# Add docker-compose-wait tool -------------------
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.7.2/wait /wait
+RUN chmod +x /wait
+
+CMD /wait && \
+    ${BIN_FILE} -config ${CONFIG_FILE} -log ${LOG_FILE}

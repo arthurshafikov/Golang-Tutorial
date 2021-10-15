@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os/signal"
 	"syscall"
 
@@ -13,8 +14,15 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	config, logg := launch.Initializate()
+	config, logg := launch.InitializateConfigAndLoggerFromFlags()
 
-	sender := app.NewSender(logg, config)
+	sender := app.NewSender(logg, config.RabbitMq.URL)
+
+	go func() {
+		for mes := range sender.ConsumerMessagesCh {
+			log.Printf("Received a message: %s", mes)
+		}
+	}()
+
 	sender.Run(ctx)
 }

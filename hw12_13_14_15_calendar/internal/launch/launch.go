@@ -17,7 +17,7 @@ func init() {
 	flag.StringVar(&logFilePath, "log", "./logs/log.txt", "Path to log file")
 }
 
-func Initializate() (config.Config, *logger.Logger) {
+func InitializateConfigAndLoggerFromFlags() (config.Config, *logger.Logger) {
 	flag.Parse()
 
 	config := config.NewConfig(configFilePath)

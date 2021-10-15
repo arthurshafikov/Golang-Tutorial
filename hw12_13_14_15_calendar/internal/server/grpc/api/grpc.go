@@ -27,7 +27,7 @@ func (c *CalendarService) Create(ctx context.Context, req *generated.EventReques
 	if err != nil {
 		return nil, err
 	}
-	if err := c.app.CreateEvent(event); err != nil {
+	if _, err := c.app.CreateEvent(event); err != nil {
 		return nil, fmt.Errorf(server.ErrCantCreateEventFormat, err)
 	}
 	return successResponse, nil
@@ -38,7 +38,7 @@ func (c *CalendarService) Update(ctx context.Context, req *generated.EventReques
 	if err != nil {
 		return nil, err
 	}
-	if err := c.app.UpdateEvent(event); err != nil {
+	if _, err := c.app.UpdateEvent(event); err != nil {
 		return nil, fmt.Errorf(server.ErrCantUpdateEventFormat, err)
 	}
 	return successResponse, nil

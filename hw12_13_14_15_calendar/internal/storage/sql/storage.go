@@ -22,9 +22,8 @@ const (
 )
 
 type Storage struct {
-	db     *sqlx.DB
-	dsn    string
-	Events []storage.Event
+	db  *sqlx.DB
+	dsn string
 }
 
 func New(dsn string) *Storage {
@@ -40,7 +39,7 @@ func (s *Storage) Connect(ctx context.Context) error {
 		s.Close()
 	}()
 	if err != nil {
-		return err
+		panic(err)
 	}
 	s.db = db
 	return nil
@@ -51,36 +50,39 @@ func (s *Storage) Close() error {
 	return err
 }
 
-func (s *Storage) Add(event storage.Event) error {
+func (s *Storage) Add(event storage.Event) (int64, error) {
+	event.ID = 0
 	if s.checkIfStartAtIsBusy(event) {
-		return storage.ErrStartAtBusy
+		return 0, storage.ErrStartAtBusy
 	}
-	_, err := s.db.Exec(
-		fmt.Sprintf("INSERT INTO %s (%s) VALUES($1, $2, $3, $4, $5, $6, $7);", EventsTable, EventsColumns),
+
+	var lastInsertID int64
+	err := s.db.QueryRowx(
+		fmt.Sprintf("INSERT INTO %s (%s) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id;", EventsTable, EventsColumns),
 		event.Title, event.Descr, event.Owner, event.StartAt, event.EndAt, event.SendNotificationAt, EventsIsSentFalse,
-	)
+	).Scan(&lastInsertID)
 	if err != nil {
-		return err
+		return 0, fmt.Errorf("cannot INSERT event")
 	}
-	return nil
+
+	return lastInsertID, nil
 }
 
-func (s *Storage) Change(event storage.Event) error {
+func (s *Storage) Change(event storage.Event) (int64, error) {
 	if s.checkIfStartAtIsBusy(event) {
-		return storage.ErrStartAtBusy
-	}
-	res, err := s.db.Exec(
-		fmt.Sprintf("UPDATE %s SET (%s) = ($1, $2, $3, $4, $5, $6, $7) WHERE id=$8;", EventsTable, EventsColumns),
-		event.Title, event.Descr, event.Owner, event.StartAt, event.EndAt, event.SendNotificationAt, event.IsSent, event.ID,
-	)
-	if err != nil {
-		return err
-	}
-	if _, err := res.RowsAffected(); err != nil {
-		return err
+		return 0, storage.ErrStartAtBusy
 	}
 
-	return nil
+	var lastInsertID int64
+	err := s.db.QueryRowx(
+		fmt.Sprintf("UPDATE %s SET (%s) = ($1, $2, $3, $4, $5, $6, $7) WHERE id=$8 RETURNING id;", EventsTable, EventsColumns),
+		event.Title, event.Descr, event.Owner, event.StartAt, event.EndAt, event.SendNotificationAt, event.IsSent, event.ID,
+	).Scan(&lastInsertID)
+	if err != nil {
+		return 0, fmt.Errorf("cannot UPDATE event")
+	}
+
+	return lastInsertID, nil
 }
 
 func (s *Storage) Get(event storage.Event) (storage.Event, error) {
@@ -113,11 +115,11 @@ func (s *Storage) ListEventsOnADay(date time.Time) (storage.EventsSlice, error) 
 	return events, err
 }
 
-func (s *Storage) ListEventsOnARange(timeStart, timePlusRange time.Time) (storage.EventsSlice, error) {
+func (s *Storage) ListEventsOnARange(rangeStartTime, rangeEndTime time.Time) (storage.EventsSlice, error) {
 	events := storage.EventsSlice{}
 
 	err := s.db.Select(&events, fmt.Sprintf("SELECT * FROM %s WHERE %s BETWEEN $1 AND $2;", EventsTable, EventStartAtColumn),
-		timeStart.Format(storage.RequestDateTimeFormat), timePlusRange.Format(storage.RequestDateTimeFormat))
+		rangeStartTime.Format(storage.RequestDateTimeFormat), rangeEndTime.Format(storage.RequestDateTimeFormat))
 
 	return events, err
 }
@@ -138,6 +140,12 @@ func (s *Storage) GetEventsWhereEndAtBeforeGivenTimestamp(timeTo time.Time) (sto
 		timeTo.Format(storage.RequestDateTimeFormat))
 
 	return events, err
+}
+
+func (s *Storage) ResetDB() error {
+	_, err := s.db.Exec(fmt.Sprintf("TRUNCATE TABLE %s;", EventsTable))
+
+	return err
 }
 
 func (s *Storage) checkIfStartAtIsBusy(event storage.Event) bool {
