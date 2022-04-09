@@ -3,9 +3,9 @@ package tests
 import (
 	"os"
 
+	sender "github.com/arthurshafikov/hw12_13_14_15_calendar/internal/app"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/logger"
 	"github.com/stretchr/testify/suite"
-	sender "github.com/thewolf27/hw12_13_14_15_calendar/internal/app"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/logger"
 )
 
 type SenderSuite struct {

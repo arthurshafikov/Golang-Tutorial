@@ -1,4 +1,4 @@
-module github.com/thewolf27/Golang-Tutorial/hw09_struct_validator
+module github.com/arthurshafikov/Golang-Tutorial/hw09_struct_validator
 
 go 1.16
 

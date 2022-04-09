@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage"
+	sqlstorage "github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage/sql"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage"
-	sqlstorage "github.com/thewolf27/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 type calendarSuiteHandler struct {

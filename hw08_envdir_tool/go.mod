@@ -1,4 +1,4 @@
-module github.com/thewolf27/Golang-Tutorial/hw08_envdir_tool
+module github.com/arthurshafikov/Golang-Tutorial/hw08_envdir_tool
 
 go 1.16
 

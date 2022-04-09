@@ -1,4 +1,4 @@
-module github.com/thewolf27/hw12_13_14_15_calendar
+module github.com/arthurshafikov/hw12_13_14_15_calendar
 
 go 1.16
 

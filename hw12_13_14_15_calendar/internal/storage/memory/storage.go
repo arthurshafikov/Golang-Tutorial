@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage"
 )
 
 type Storage struct {

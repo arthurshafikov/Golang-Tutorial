@@ -3,8 +3,8 @@ package launch
 import (
 	"flag"
 
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/config"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/logger"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/config"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/logger"
 )
 
 var (

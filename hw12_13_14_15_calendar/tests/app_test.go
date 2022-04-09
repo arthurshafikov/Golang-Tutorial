@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
+	sender "github.com/arthurshafikov/hw12_13_14_15_calendar/internal/app"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage"
+	sqlstorage "github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage/sql"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	sender "github.com/thewolf27/hw12_13_14_15_calendar/internal/app"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage"
-	sqlstorage "github.com/thewolf27/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 type appSuiteHandler struct {

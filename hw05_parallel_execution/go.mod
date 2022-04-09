@@ -1,4 +1,4 @@
-module github.com/thewolf27/Golang-Tutorial/hw05_parallel_execution
+module github.com/arthurshafikov/Golang-Tutorial/hw05_parallel_execution
 
 go 1.16
 

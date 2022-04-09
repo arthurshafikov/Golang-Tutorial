@@ -6,11 +6,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/app"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/launch"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/server/grpc/api"
-	internalhttp "github.com/thewolf27/hw12_13_14_15_calendar/internal/server/http"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage/resolver"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/app"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/launch"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/server/grpc/api"
+	internalhttp "github.com/arthurshafikov/hw12_13_14_15_calendar/internal/server/http"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage/resolver"
 )
 
 func main() {

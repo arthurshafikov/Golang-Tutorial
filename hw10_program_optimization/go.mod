@@ -1,4 +1,4 @@
-module github.com/thewolf27/Golang-Tutorial/hw10_program_optimization
+module github.com/arthurshafikov/Golang-Tutorial/hw10_program_optimization
 
 go 1.16
 

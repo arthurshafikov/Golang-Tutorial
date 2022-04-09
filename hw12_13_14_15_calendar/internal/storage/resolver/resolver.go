@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/config"
-	memorystorage "github.com/thewolf27/hw12_13_14_15_calendar/internal/storage/memory"
-	sqlstorage "github.com/thewolf27/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/config"
+	memorystorage "github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 func ResolveStorage(ctx context.Context, config config.Config) (interface{}, error) {

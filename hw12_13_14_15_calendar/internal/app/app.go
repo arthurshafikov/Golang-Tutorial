@@ -3,8 +3,8 @@ package app
 import (
 	"time"
 
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/config"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/config"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage"
 )
 
 type App struct {

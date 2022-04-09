@@ -1,4 +1,4 @@
-module github.com/thewolf27/Golang-Tutorial/hw06_pipeline_execution
+module github.com/arthurshafikov/Golang-Tutorial/hw06_pipeline_execution
 
 go 1.16
 

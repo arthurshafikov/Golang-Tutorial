@@ -1,4 +1,4 @@
-module github.com/thewolf27/Golang-Tutorial/hw11_telnet_client
+module github.com/arthurshafikov/Golang-Tutorial/hw11_telnet_client
 
 go 1.16
 

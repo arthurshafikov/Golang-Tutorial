@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/server"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/server/grpc/generated"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/server"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/server/grpc/generated"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage"
 )
 
 var successResponse = &generated.ServerResponse{

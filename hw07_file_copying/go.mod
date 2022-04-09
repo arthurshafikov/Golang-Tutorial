@@ -1,4 +1,4 @@
-module github.com/thewolf27/Golang-Tutorial/hw07_file_copying
+module github.com/arthurshafikov/Golang-Tutorial/hw07_file_copying
 
 go 1.16
 

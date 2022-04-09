@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage"
-	"github.com/thewolf27/hw12_13_14_15_calendar/pkg/rabbitmq"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/pkg/rabbitmq"
 )
 
 const (

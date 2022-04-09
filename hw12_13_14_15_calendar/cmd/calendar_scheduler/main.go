@@ -5,9 +5,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/app"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/launch"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage/resolver"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/app"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/launch"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage/resolver"
 )
 
 func main() {

@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjsonE3ab7953DecodeGithubComThewolf27GolangTutorialHw10ProgramOptimization(in *jlexer.Lexer, out *User) {
+func easyjsonE3ab7953DecodeGithubComArthurshafikovGolangTutorialHw10ProgramOptimization(in *jlexer.Lexer, out *User) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -60,7 +60,7 @@ func easyjsonE3ab7953DecodeGithubComThewolf27GolangTutorialHw10ProgramOptimizati
 		in.Consumed()
 	}
 }
-func easyjsonE3ab7953EncodeGithubComThewolf27GolangTutorialHw10ProgramOptimization(out *jwriter.Writer, in User) {
+func easyjsonE3ab7953EncodeGithubComArthurshafikovGolangTutorialHw10ProgramOptimization(out *jwriter.Writer, in User) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -105,23 +105,23 @@ func easyjsonE3ab7953EncodeGithubComThewolf27GolangTutorialHw10ProgramOptimizati
 // MarshalJSON supports json.Marshaler interface
 func (v User) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonE3ab7953EncodeGithubComThewolf27GolangTutorialHw10ProgramOptimization(&w, v)
+	easyjsonE3ab7953EncodeGithubComArthurshafikovGolangTutorialHw10ProgramOptimization(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v User) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonE3ab7953EncodeGithubComThewolf27GolangTutorialHw10ProgramOptimization(w, v)
+	easyjsonE3ab7953EncodeGithubComArthurshafikovGolangTutorialHw10ProgramOptimization(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *User) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonE3ab7953DecodeGithubComThewolf27GolangTutorialHw10ProgramOptimization(&r, v)
+	easyjsonE3ab7953DecodeGithubComArthurshafikovGolangTutorialHw10ProgramOptimization(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *User) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonE3ab7953DecodeGithubComThewolf27GolangTutorialHw10ProgramOptimization(l, v)
+	easyjsonE3ab7953DecodeGithubComArthurshafikovGolangTutorialHw10ProgramOptimization(l, v)
 }

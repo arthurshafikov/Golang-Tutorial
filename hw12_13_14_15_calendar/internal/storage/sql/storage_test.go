@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage"
 )
 
 var events = storage.EventsSlice{

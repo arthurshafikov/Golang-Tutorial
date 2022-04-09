@@ -3,8 +3,8 @@ package app
 import (
 	"log"
 
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/pkg/rabbitmq"
 	"github.com/rabbitmq/amqp091-go"
-	"github.com/thewolf27/hw12_13_14_15_calendar/pkg/rabbitmq"
 	"golang.org/x/net/context"
 )
 

@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/server"
+	"github.com/arthurshafikov/hw12_13_14_15_calendar/internal/storage"
 	"github.com/stretchr/testify/require"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/server"
-	"github.com/thewolf27/hw12_13_14_15_calendar/internal/storage"
 )
 
 const expectedSuccessJSON = `{"data":"Success","error":null}`
